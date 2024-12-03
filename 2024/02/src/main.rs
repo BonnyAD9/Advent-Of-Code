@@ -22,7 +22,10 @@ fn main() -> Result<()> {
 }
 
 fn part1<I: IntoIterator<Item = u32> + Clone>(data: I) -> bool {
-    fn check<F: Fn(u32, u32) -> bool, I: Iterator<Item = u32>>(mut data: I, f: F) -> bool {
+    fn check<F: Fn(u32, u32) -> bool, I: Iterator<Item = u32>>(
+        mut data: I,
+        f: F,
+    ) -> bool {
         let mut last = data.next().unwrap();
         for d in data {
             if !f(last, d) || d.abs_diff(last) > 3 {
@@ -33,7 +36,8 @@ fn part1<I: IntoIterator<Item = u32> + Clone>(data: I) -> bool {
         true
     }
 
-    check(data.clone().into_iter(), |a, b| a < b) || check(data.into_iter(), |a, b| a > b)
+    check(data.clone().into_iter(), |a, b| a < b)
+        || check(data.into_iter(), |a, b| a > b)
 }
 
 fn part2(data: &[u32]) -> bool {
