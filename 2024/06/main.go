@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
 	"strings"
 )
@@ -14,16 +15,7 @@ type vec2 struct {
 	y int
 }
 
-type Tile int8
-
-const (
-	Unvisited Tile = iota
-	VisitedUp
-	VisitedRight
-	VisitedDown
-	VisitedLeft
-	Barier
-)
+const barrier = math.MaxInt
 
 func (s vec2) rotate() vec2 {
 	return vec2{-s.y, s.x}
@@ -33,23 +25,8 @@ func (s vec2) add(v vec2) vec2 {
 	return vec2{s.x + v.x, s.y + v.y}
 }
 
-func (s vec2) toTile() Tile {
-	switch s {
-	case vec2{-1, 0}:
-		return VisitedUp
-	case vec2{0, 1}:
-		return VisitedRight
-	case vec2{1, 0}:
-		return VisitedDown
-	case vec2{0, -1}:
-		return VisitedLeft
-	default:
-		return VisitedUp
-	}
-}
-
-func (s Tile) isVisited() bool {
-	return s == VisitedUp || s == VisitedDown || s == VisitedRight || s == VisitedLeft
+func isVisited(v int) bool {
+	return v > 0 && v != barrier
 }
 
 func main() {
@@ -73,36 +50,46 @@ func Start() error {
 	return nil
 }
 
-func part1(field [][]Tile, pos vec2, dir vec2) int {
+func part1(field [][]int, pos vec2, dir vec2) int {
 	walkMap(field, pos, dir)
 	return resetMap(field)
 }
 
-func part2(field [][]Tile, pos vec2, dir vec2) int {
-	res := 0;
+func part2(field [][]int, pos vec2, dir vec2) int {
+	walkMap(field, pos, dir)
+	bars := map[vec2]bool{};
 	for y, l := range field {
 		for x, t := range l {
-			if t == Barier || (pos == vec2{x, y}) {
-				continue
+			if isVisited(t) {
+				bars[vec2{x, y}] = true;
+				field[y][x] = 0;
 			}
-			field[y][x] = Barier;
-			if walkMap(field, pos, dir) {
-				res += 1;
-			}
-			resetMap(field)
-			field[y][x] = Unvisited
 		}
+	}
+
+	res := 0;
+	for cur := range bars {
+		t := at(field, cur)
+		if *t == barrier || cur == pos {
+			continue
+		}
+		*t = barrier;
+		if walkMap(field, pos, dir) {
+			res += 1;
+		}
+		resetMap(field)
+		*t = 0
 	}
 	return res
 }
 
-func resetMap(field [][]Tile) int {
+func resetMap(field [][]int) int {
 	res := 0;
 
 	for y, l := range field {
 		for x, t := range l {
-			if t.isVisited() {
-				field[y][x] = Unvisited
+			if isVisited(t) {
+				field[y][x] = 0
 				res += 1
 			}
 		}
@@ -111,28 +98,26 @@ func resetMap(field [][]Tile) int {
 	return res
 }
 
-func walkMap(field [][]Tile, pos vec2, dir vec2) bool {
-	cnt := 0;
-	maxCnt := len(field) * len(field[0]) * 4
+func walkMap(field [][]int, pos vec2, dir vec2) bool {
 	for at(field, pos) != nil {
-		if *at(field, pos) == dir.toTile() || cnt > maxCnt {
+		cur := at(field, pos)
+		*cur += 1;
+		if *cur > 4 {
 			return true
 		}
-		*at(field, pos) = dir.toTile()
 		newPos := pos.add(dir)
 		newTile := at(field, newPos)
-		if newTile != nil && *newTile == Barier {
+		if newTile != nil && *newTile == barrier {
 			dir = dir.rotate()
 		} else {
 			pos = newPos
 		}
-		cnt += 1
 	}
 	return false
 }
 
-func readMap() ([][]Tile, vec2, vec2, error) {
-	field := [][]Tile{}
+func readMap() ([][]int, vec2, vec2, error) {
+	field := [][]int{}
 	pos := vec2{0, 0}
 	dir := vec2{0, -1}
 
@@ -145,17 +130,17 @@ func readMap() ([][]Tile, vec2, vec2, error) {
 		if e != nil {
 			return field, pos, dir, e
 		}
-		line := []Tile{}
+		line := []int{}
 		for _, c := range strings.TrimSpace(l) {
 			if c == '#' {
-				line = append(line, Barier)
+				line = append(line, barrier)
 				continue
 			} else if c == '.' {
-				line = append(line, Unvisited)
+				line = append(line, 0)
 				continue
 			}
 			pos = vec2{len(line), len(field)}
-			line = append(line, Unvisited)
+			line = append(line, 0)
 			switch c {
 			case '^':
 				dir = vec2{0, -1}
@@ -173,7 +158,7 @@ func readMap() ([][]Tile, vec2, vec2, error) {
 	return field, pos, dir, nil
 }
 
-func at(field [][]Tile, pos vec2) *Tile {
+func at(field [][]int, pos vec2) *int {
 	if pos.y < 0 || pos.x < 0 || pos.y >= len(field) || pos.x >= len(field[pos.y]) {
 		return nil
 	}
