@@ -37,9 +37,9 @@ func main() {
 }
 
 func Start() error {
-	field, pos, dir, e := readMap();
+	field, pos, dir, e := readMap()
 	if e != nil {
-		return e;
+		return e
 	}
 
 	//res := part1(field, pos, dir)
@@ -57,25 +57,25 @@ func part1(field [][]int, pos vec2, dir vec2) int {
 
 func part2(field [][]int, pos vec2, dir vec2) int {
 	walkMap(field, pos, dir)
-	bars := map[vec2]bool{};
+	bars := map[vec2]bool{}
 	for y, l := range field {
 		for x, t := range l {
 			if isVisited(t) {
-				bars[vec2{x, y}] = true;
-				field[y][x] = 0;
+				bars[vec2{x, y}] = true
+				field[y][x] = 0
 			}
 		}
 	}
 
-	res := 0;
+	res := 0
 	for cur := range bars {
 		t := at(field, cur)
 		if *t == barrier || cur == pos {
 			continue
 		}
-		*t = barrier;
+		*t = barrier
 		if walkMap(field, pos, dir) {
-			res += 1;
+			res += 1
 		}
 		resetMap(field)
 		*t = 0
@@ -84,7 +84,7 @@ func part2(field [][]int, pos vec2, dir vec2) int {
 }
 
 func resetMap(field [][]int) int {
-	res := 0;
+	res := 0
 
 	for y, l := range field {
 		for x, t := range l {
@@ -101,7 +101,7 @@ func resetMap(field [][]int) int {
 func walkMap(field [][]int, pos vec2, dir vec2) bool {
 	for at(field, pos) != nil {
 		cur := at(field, pos)
-		*cur += 1;
+		*cur += 1
 		if *cur > 4 {
 			return true
 		}
