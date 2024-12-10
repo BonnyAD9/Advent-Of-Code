@@ -43,7 +43,6 @@ fn main() -> Result<()> {
         }
     }
 
-    println!();
     println!("{res}");
 
     Ok(())
