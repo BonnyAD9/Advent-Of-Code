@@ -1,4 +1,4 @@
-BUILD_TYPE=Release
+BUILD_TYPE=Debug
 PARALEL=-j $(shell nproc)
 MAIN=src/*.cpp # src/*.h src/**/*.c src/**/*.h
 ALL=$(MAIN)
