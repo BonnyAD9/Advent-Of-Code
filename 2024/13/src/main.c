@@ -12,7 +12,7 @@ typedef struct {
 } Machine;
 
 bool read_machine(Machine *m);
-bool solve_machine(const Machine *m, long long *a, long long *b);
+bool solve_machine(Machine *m, long long *a, long long *b);
 void part2(Machine *m);
 
 int main(void) {
@@ -36,27 +36,19 @@ bool read_machine(Machine *m) {
     return r == 6;
 }
 
-bool solve_machine(const Machine *m, long long *a, long long *b) {
-    long long ax = m->ax;
-    long long bx = m->bx;
-    long long px = m->px;
-
-    long long ay = m->ay;
-    long long by = m->by;
-    long long py = m->py;
-
-    if (ay != 0) {
-        long long m = ax;
-        ax *= ay;
-        bx *= ay;
-        px *= ay;
-        ay = 0;
-        by = by * m - bx;
-        py = py * m - px;
+bool solve_machine(Machine *m, long long *a, long long *b) {
+    if (m->ay != 0) {
+        long long n = m->ax;
+        m->ax *= m->ay;
+        m->bx *= m->ay;
+        m->px *= m->ay;
+        m->ay = 0;
+        m->by = m->by * n - m->bx;
+        m->py = m->py * n - m->px;
     }
 
-    *b = py / by;
-    *a = (px - *b * bx) / ax;
+    *b = m->py / m->by;
+    *a = (m->px - *b * m->bx) / m->ax;
 
     return *a * m->ax + *b * m->bx == m->px
         && *a * m->ay + *b * m->by == m->py
