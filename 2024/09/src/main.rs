@@ -55,42 +55,27 @@ fn part1(mut nums: Vec<(usize, usize)>) -> usize {
     res
 }
 
-fn part2(mut nums: Vec<(usize, usize)>) -> usize {
-    let mut id = 0;
+fn part2(nums: Vec<(usize, usize)>) -> usize {
+    let mut nums: Vec<_> = nums.into_iter().map(|(d, s)| (d, 0, s)).collect();
     let mut res = 0;
-    let mut pos = 0;
 
-    while id < nums.len() {
-        let (data, mut space) = nums[id];
+    'outer: for id in (0..nums.len()).rev() {
+        let (data, additional, space) = nums[id];
 
-        let mut nextid = id + 1;
-
-        while nextid < nums.len() && nums[nextid].0 == 0 {
-            space += nums[nextid].0;
-            nextid += 1;
+        let mut pos = 0;
+        for p in 0..id {
+            let (d, a, s) = nums[p];
+            pos += d + a;
+            if s >= data {
+                res += (pos..pos + data).sum::<usize>() * id;
+                nums[id] = (0, additional, data + space);
+                nums[p] = (d, a + data, s - data);
+                continue 'outer;
+            }
+            pos += s;
         }
 
         res += (pos..pos + data).sum::<usize>() * id;
-        pos += data;
-
-        id = nextid;
-
-        while nums[nums.len() - 1].0 == 0 {
-            nums.pop();
-        }
-
-        let mut id = nums.len() - 1;
-        while space != 0 && id >= nextid {
-            let (d, s) = nums[id];
-            if d <= space {
-                res += (pos..pos + d).sum::<usize>() * id;
-                pos += d;
-                nums[id] = (0, s + d);
-                space -= d;
-            }
-
-            id -= 1;
-        }
     }
 
     res
