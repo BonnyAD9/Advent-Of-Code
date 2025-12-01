@@ -31,6 +31,8 @@ fn count_0(s: #(Int, Int), i: Int) -> #(Int, Int) {
     }
 }
 
+// Very stupid, I know, but it is very simple to implement and there is no
+// need for it to be fast.
 fn expand_num(n: Int) -> yielder.Yielder(Int) {
     case n < 0 {
         True -> yielder.repeat(-1) |> yielder.take(-n)
