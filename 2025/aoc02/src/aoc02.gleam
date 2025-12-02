@@ -44,41 +44,30 @@ pub fn is_repeated(n: Int, rep: Int) -> Bool {
 }
 
 pub fn is_repeated0(n: Int, cnt: Int, rep: Int) -> Bool {
-    case cnt % rep {
-        0 -> {
-            let mul = int.to_float(cnt / rep)
-                |> int.power(10, _)
-                |> result.unwrap(0.)
-                |> float.round
-            is_repeated1(n, mul, n % mul)
-        }
-        _ -> False
+    cnt % rep == 0 && {
+        let mul = int.to_float(cnt / rep)
+            |> int.power(10, _)
+            |> result.unwrap(0.)
+            |> float.round
+        is_repeated1(n, mul, n % mul)
     }
 }
 
 pub fn is_repeated1(n: Int, mul: Int, pat: Int) -> Bool {
     let div = n / mul
     let mod = n % mul
-    case n {
-        0 -> True
-        _ -> mod == pat && is_repeated1(div, mul, pat)
-    }
+    n == 0 || { mod == pat && is_repeated1(div, mul, pat) }
 }
 
 pub fn count_digits(n: Int, base: Float) -> Int {
-    case n == 0 {
-        True -> 1
-        False -> {
-            let logn = n |> int.to_float()
-                |> float.logarithm()
-                |> result.unwrap(0.)
-            let logb = float.logarithm(base) |> result.unwrap(0.)
-            1 + {
-                float.divide(logn, logb)
-                    |> result.unwrap(0.)
-                    |> float.floor()
-                    |> float.round
-            }
-        }
+    let logn = n |> int.to_float()
+        |> float.logarithm()
+        |> result.unwrap(0.)
+    let logb = float.logarithm(base) |> result.unwrap(0.)
+    1 + {
+        float.divide(logn, logb)
+            |> result.unwrap(0.)
+            |> float.floor()
+            |> float.round
     }
 }
