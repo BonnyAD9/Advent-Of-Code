@@ -16,12 +16,11 @@ pub fn main() -> Nil {
     io.println(int.to_string(sum))
 }
 
-fn digit_list(s: String) -> List(#(Int, Int)) {
+fn digit_list(s: String) -> List(Int) {
     string.trim(s)
         |> string.to_graphemes()
         |> yielder.from_list()
         |> yielder.map(parse_digit)
-        |> yielder.index()
         |> yielder.to_list()
 }
 
@@ -29,20 +28,17 @@ fn parse_digit(s: String) -> Int {
     int.parse(s) |> result.unwrap(0)
 }
 
-fn max_joltage(j: List(#(Int, Int))) -> Int {
-    // j, second index
-    let #(b, i) = list.max(j, fn (a, b) { cmp_ind(a, b, -1) }) |> result.unwrap(#(0, -1))
-    let #(s, _) = list.max(j, fn (a, b) { cmp_ind(a, b, i) }) |> result.unwrap(#(0, -1))
-    b * 10 + s
+fn max_joltage(j: List(Int)) -> Int {
+    max_joltage0(0, 0, j)
 }
 
-fn cmp_ind(a: #(Int, Int), b: #(Int, Int), ind: Int) -> order.Order {
-    let #(av, ai) = a
-    let #(bv, bi) = b
-    case True {
-        _ if ai > ind && bi > ind -> int.compare(av, bv)
-        _ if ai < ind && bi < ind -> int.compare(ai, bi)
-        _ if ai > ind -> order.Gt
-        _ -> order.Lt
+fn max_joltage0(b: Int, s: Int, j: List(Int)) -> Int {
+    case j {
+        [] -> b * 10 + s
+        [x] if x > s -> b * 10 + x
+        [_] -> b * 10 + s
+        [x, y, ..l] if x > b -> max_joltage0(x, y, l)
+        [x, ..l] if x > s -> max_joltage0(b, x, l)
+        [_, ..l] -> max_joltage0(b, s, l)
     }
 }
