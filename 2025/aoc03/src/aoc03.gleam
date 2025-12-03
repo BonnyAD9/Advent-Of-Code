@@ -37,6 +37,7 @@ fn max_joltage0(b: Int, s: Int, j: List(Int)) -> Int {
         [] -> b * 10 + s
         [x] if x > s -> b * 10 + x
         [_] -> b * 10 + s
+        [x, y, _, ..] if x > b && y > x -> max_joltage0(b, s, list.drop(j, 1))
         [x, y, ..l] if x > b -> max_joltage0(x, y, l)
         [x, ..l] if x > s -> max_joltage0(b, x, l)
         [_, ..l] -> max_joltage0(b, s, l)
