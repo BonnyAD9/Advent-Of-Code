@@ -1,3 +1,5 @@
+import gleam/int
+import gleam/list
 import gleam/result
 import gleam/bit_array
 import gleam/yielder
@@ -15,25 +17,32 @@ pub fn main() -> Nil {
     let lines = stdin.read_lines()
         |> yielder.map(string.trim)
         |> yielder.to_list()
-
-    // TODO: call accesible cnt
-
-    io.println("Hello from aoc04!")
+    
+    let res = accessible_cnt(from_lines(lines))
+    io.println(int.to_string(res))
 }
 
 fn accessible_cnt(map: Map2D) -> Int {
-    // Call 0 variant
+    accessible_cnt0(map, 0, 0)
 }
 
 fn accessible_cnt0(map: Map2D, idx: Int, cnt: Int) -> Int {
-    case idx >= bit_array.byte_size() {
+    case idx >= bit_array.byte_size(map.data) {
         True -> cnt
         False -> {
             let pos = #(idx % map.width, idx / map.width)
-            // TODO: count neighborhood
-            // TODO: call recursively
+            let ncnt = neighborhood(map, pos) |> list.count(is_roll)
+            let cnt2 = case is_roll(at(map, pos)) && ncnt < 4 {
+                True -> cnt + 1
+                False -> cnt
+            }
+            accessible_cnt0(map, idx + 1, cnt2)
         }
     }
+}
+
+fn is_roll(a: Int) -> Bool {
+    a == roll
 }
 
 fn from_lines(lines: List(String)) -> Map2D {
@@ -47,7 +56,7 @@ fn from_lines(lines: List(String)) -> Map2D {
 }
 
 fn at(map: Map2D, idx: #(Int, Int)) -> Int {
-    case idx.0 < 0 || idx.1 < 0 {
+    case idx.0 < 0 || idx.1 < 0 || idx.0 >= map.width {
         True -> 0
         False -> {
             let slice = bit_array.slice(map.data, idx.1 * map.width + idx.0, 1) |> result.unwrap(<<0>>)
