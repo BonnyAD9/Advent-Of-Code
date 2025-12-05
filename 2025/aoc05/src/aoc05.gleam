@@ -11,18 +11,18 @@ pub fn main() -> Nil {
         |> yielder.take_while(fn (a) { !string.is_empty(string.trim(a)) })
         |> yielder.map(parse_range)
         |> yielder.to_list()
-    
+
     let part1 = stdin.read_lines()
         |> yielder.map(parse_int)
         |> yielder.fold(0, fn (a, b) { fold_is_in_any_range(a, b, ranges) })
-    
+
     let part2 = yielder.from_list(ranges)
         |> yielder.fold([], add_range)
         |> yielder.from_list()
         |> yielder.map(range_size)
         |> yielder.reduce(int.add)
         |> result.unwrap(0)
-    
+
     io.print("part1: ")
     io.println(int.to_string(part1))
     io.print("part2: ")
@@ -34,35 +34,25 @@ fn range_size(r: #(Int, Int)) -> Int {
 }
 
 fn add_range(rs: List(#(Int, Int)), r: #(Int, Int)) -> List(#(Int, Int)) {
-    let res = add_range0(rs, r, [])
-    let r = case res {
-        [] -> rs
-        _ -> res
-    }
-    io.println(list.map(r, fn(r) {
-        int.to_string(r.0) <> "-" <> int.to_string(r.1)
-    }) |> string.join(", "))
-    r
+    add_range0(rs, r, [])
 }
 
-fn add_range0(rs: List(#(Int, Int)), r: #(Int, Int), res: List(#(Int, Int))) -> List(#(Int, Int)) {
-    let #(s, e) = r
+fn add_range0(
+    rs: List(#(Int, Int)),
+    ir: #(Int, Int),
+    res: List(#(Int, Int))
+) -> List(#(Int, Int)) {
     case rs {
-        [] -> [r, ..res]
+        [] -> [ir, ..res]
         [r, ..] -> {
             let l = list.drop(rs, 1)
-            let si = in_range(s, r)
-            let ei = in_range(e, r)
-            case si, ei {
-                True, True -> []
-                True, False -> list.append(l, [#(r.0, e), ..res])
-                False, True -> list.append(l, [#(s, r.1), ..res])
-                _, _ -> {
-                    case in_range(r.0, #(s, e)) && in_range(r.1, #(s, e)) {
-                        True -> list.append(l, [#(s, e), ..res])
-                        False -> add_range0(l, #(s, e), [r, ..res])
-                    }
-                }
+            case ranges_overlap(ir, r) {
+                True -> add_range0(
+                    l,
+                    #(int.min(r.0, ir.0), int.max(r.1, ir.1)),
+                    res
+                )
+                False -> add_range0(l, ir, [r, ..res])
             }
         }
     }
@@ -96,4 +86,8 @@ pub fn parse_range(s: String) -> #(Int, Int) {
 
 fn in_range(n: Int, r: #(Int, Int)) -> Bool {
     n >= r.0 && n <= r.1
+}
+
+fn ranges_overlap(a: #(Int, Int), b: #(Int, Int)) -> Bool {
+    in_range(a.0, b) || in_range(b.0, a)
 }
