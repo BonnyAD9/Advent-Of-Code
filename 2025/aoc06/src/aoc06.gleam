@@ -7,17 +7,60 @@ import gleam/int
 import gleam/io
 
 pub fn main() -> Nil {
+    // let res = part1()
+    let res = part2()
+    
+    io.println(int.to_string(res))
+}
+
+pub fn part1() -> Int {
     let lines = stdin.read_lines()
         |> yielder.map(parse_line)
         |> yielder.to_list()
         |> list.reverse()
     
-    let res = case lines {
+    case lines {
         [op, ..data] -> calculate_all(op, data)
         _ -> 0
     }
-    
-    io.println(int.to_string(res))
+}
+
+pub fn part2() -> Int {
+    stdin.read_lines()
+        |> yielder.map(string.to_graphemes)
+        |> yielder.to_list()
+        |> list.transpose()
+        |> yielder.from_list()
+        |> yielder.map(string.join(_, ""))
+        |> yielder.map(parse_line)
+        |> yielder.to_list()
+        |> continuous_sum_calculate()
+}
+
+fn continuous_sum_calculate(data: List(List(Int))) -> Int {
+    continuous_sum_calculate0(data, 0, 0, 0)
+}
+
+fn continuous_sum_calculate0(
+    data: List(List(Int)),
+    sum: Int,
+    op: Int,
+    res: Int) -> Int
+{
+    case data {
+        [] -> sum + res
+        [[n, op], ..data] -> {
+            continuous_sum_calculate0(data, sum + res, op, n)
+        }
+        [[n], ..data] -> continuous_sum_calculate0(
+            data,
+            sum,
+            op,
+            execute_operator(op, res, n)
+        )
+        [[], ..data] -> continuous_sum_calculate0(data, sum + res, 0, 0)
+        _ -> panic
+    }
 }
 
 fn calculate_all(op: List(Int), data: List(List(Int))) -> Int {
@@ -58,7 +101,21 @@ fn execute_operator(op: Int, a: Int, b: Int) -> Int {
 }
 
 fn parse_line(l: String) -> List(Int) {
-    split_by_spaces(string.trim(l)) |> list.map(parse_number)
+    case string.trim(l) {
+        "" -> []
+        l -> {
+            case string.ends_with(l, "*") || string.ends_with(l, "+") {
+                True -> {
+                    let n = string.trim(string.drop_end(l, 1))
+                    let op = string.last(l) |> result.unwrap("+")
+                    split_by_spaces(n)
+                        |> list.map(parse_number)
+                        |> list.append([parse_number(op)])
+                }
+                False -> split_by_spaces(l) |> list.map(parse_number)
+            }
+        }
+    }
 }
 
 fn parse_number(s: String) -> Int {
