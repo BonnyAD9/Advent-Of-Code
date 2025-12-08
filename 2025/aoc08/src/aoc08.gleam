@@ -128,23 +128,26 @@ fn closest0(l: List(Point), p: Point, best: Point, bestd: Int) -> #(Int, Point) 
 
 // part1
 
-pub fn connect_n(p: List(Point), con: Int) -> List(Dict(Point, Bool)) {
+pub fn connect_n(p: List(Point), con: Int) -> List(Group) {
     connect_n0(p, con, dict.new())
         |> dict.keys()
         |> list.fold([], add_connection)
 }
 
-fn connect_n0(p: List(Point), con: Int, g: Dict(#(Point, Point), Bool)) -> Dict(#(Point, Point), Bool) {
+fn connect_n0(p: List(Point), con: Int, g: Dict(Pair, Bool))
+    -> Dict(Pair, Bool)
+{
     case con {
          0 -> g
          _ -> {
-             let pr = closest_pair_not_of(p, fn(a, b) { !dict.has_key(g, #(a, b)) })
+             let pr =
+                closest_pair_not_of(p, fn(a, b) { !dict.has_key(g, #(a, b)) })
              connect_n0(p, con - 1, dict.insert(g, pr, True))
          }
      }
 }
 
-pub fn mul_max_group_sizes(g: List(Dict(Point, Bool)), n: Int) -> Int {
+pub fn mul_max_group_sizes(g: List(Group), n: Int) -> Int {
     list.sort(g, fn (a, b) { int.compare(dict.size(b), dict.size(a)) })
         |> yielder.from_list()
         |> yielder.map(dict.size)
@@ -164,19 +167,26 @@ fn parse_point(s: String) -> Point {
     }
 }
 
-fn add_connection(d: List(Dict(Point, Bool)), c: #(Point, Point)) -> List(Dict(Point, Bool)) {
+fn add_connection(d: List(Group), c: Pair) -> List(Group) {
     let #(a, b) = c
-    let da = list.find(d, dict.has_key(_, a)) |> result.lazy_unwrap(fn (){ dict.from_list([#(a, True)]) })
-    let db = list.find(d, dict.has_key(_, b)) |> result.lazy_unwrap(fn (){ dict.from_list([#(b, True)]) })
+    let da = list.find(d, dict.has_key(_, a))
+        |> result.lazy_unwrap(fn (){ dict.from_list([#(a, True)]) })
+    let db = list.find(d, dict.has_key(_, b))
+        |> result.lazy_unwrap(fn (){ dict.from_list([#(b, True)]) })
     
     [ dict.combine(da, db, bool.or), ..list.filter(d, fn(d) { !dict.has_key(d, a) && !dict.has_key(d, a) }) ]
 }
 
-fn closest_pair_not_of(d: List(Point), f: fn(Point, Point) -> Bool) -> #(Point, Point) {
+fn closest_pair_not_of(d: List(Point), f: fn(Point, Point) -> Bool) -> Pair {
     closest_pair_not_of0(d, f, #(large_point, large_point), large)
 }
 
-fn closest_pair_not_of0(d: List(Point), f: fn(Point, Point) -> Bool, best: #(Point, Point), bestd: Int) -> #(Point, Point) {
+fn closest_pair_not_of0(
+    d: List(Point),
+    f: fn(Point, Point) -> Bool,
+    best: Pair,
+    bestd: Int
+) -> Pair {
     case d {
         [] -> best
         [_] -> best
@@ -191,11 +201,18 @@ fn closest_pair_not_of0(d: List(Point), f: fn(Point, Point) -> Bool, best: #(Poi
     }
 }
 
-fn closest_not_of(d: List(Point), p: Point, f: fn(Point, Point) -> Bool) -> Point {
+fn closest_not_of(d: List(Point), p: Point, f: fn(Point, Point) -> Bool)
+    -> Point {
     closest_not_of0(d, p, f, large_point, large)
 }
 
-fn closest_not_of0(d: List(Point), p: Point, f: fn(Point, Point) -> Bool, best: Point, bestd: Int) -> Point {
+fn closest_not_of0(
+    d: List(Point),
+    p: Point,
+    f: fn(Point, Point) -> Bool,
+    best: Point,
+    bestd: Int
+) -> Point {
     case d {
         [] -> best
         [a, ..d] -> {
