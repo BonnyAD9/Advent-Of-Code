@@ -38,7 +38,6 @@ fn connect0(p: List(Point), con: Int, g: Dict(#(Point, Point), Bool)) -> Dict(#(
          0 -> g
          _ -> {
              let pr = closest_pair_not_of(p, fn(a, b) { !dict.has_key(g, #(a, b)) })
-             io.println(point_to_string(pr.0) <> " " <> point_to_string(pr.1))
              connect0(p, con - 1, dict.insert(g, pr, True))
          }
      }
@@ -50,21 +49,6 @@ fn mul_max_group_sizes(g: List(Dict(Point, Bool)), n: Int) -> Int {
         |> yielder.map(dict.size)
         |> yielder.take(n)
         |> yielder.fold(1, int.multiply)
-}
-
-fn connect_distinct(p: List(Point), con: Int) -> List(Dict(Point, Bool)) {
-    connect_distinct0(p, con, [])
-}
-
-fn connect_distinct0(p: List(Point), con: Int, g: List(Dict(Point, Bool))) -> List(Dict(Point, Bool)) {
-   case con {
-        0 -> g
-        _ -> {
-            let pr = closest_pair_not_of(p, fn(a, b) { !in_same_group(g, a, b) })
-            io.println(point_to_string(pr.0) <> " " <> point_to_string(pr.1))
-            connect_distinct0(p, con - 1, add_connection(g, pr))
-        }
-    }
 }
 
 fn parse_point(s: String) -> Point {
@@ -86,20 +70,6 @@ fn add_connection(d: List(Dict(Point, Bool)), c: #(Point, Point)) -> List(Dict(P
     let db = list.find(d, dict.has_key(_, b)) |> result.lazy_unwrap(fn (){ dict.from_list([#(b, True)]) })
     
     [ dict.combine(da, db, bool.or), ..list.filter(d, fn(d) { !dict.has_key(d, a) && !dict.has_key(d, a) }) ]
-}
-
-fn in_same_group(d: List(Dict(Point, Bool)), a: Point, b: Point) -> Bool {
-    case d {
-        [] -> False
-        [d, ..rd] -> {
-            case dict.has_key(d, a), dict.has_key(d, b) {
-                True, True -> True
-                True, False -> False
-                False, True -> False
-                False, False -> in_same_group(rd, a, b)
-            }
-        }
-    }
 }
 
 fn closest_pair_not_of(d: List(Point), f: fn(Point, Point) -> Bool) -> #(Point, Point) {
