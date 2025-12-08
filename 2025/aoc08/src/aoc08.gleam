@@ -116,8 +116,3 @@ fn dist_sq(a: Point, b: Point) -> Float {
     let z = float.subtract(z, c)
     float.add(float.multiply(x, x), float.multiply(y, y)) |> float.add(float.multiply(z, z))
 }
-
-fn point_to_string(p: Point) -> String {
-    let Point(x, y, z) = p
-    float.to_string(x) <> "," <> float.to_string(y) <> "," <> float.to_string(z)
-}
