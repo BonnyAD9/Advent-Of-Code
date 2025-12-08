@@ -23,14 +23,14 @@ pub fn main() -> Nil {
     let points = stdin.read_lines()
         |> yielder.map(parse_point)
         |> yielder.to_list()
-        
+
     // part1
     // let res = points |> connect_n(1000) |> mul_max_group_sizes(3)
     // part2
     let res = points
         |> list.map(fn(p) { dict.from_list([#(p, True)]) })
         |> last_pair_xmul() // part2
-    
+
     io.println(int.to_string(res))
 }
 
@@ -190,7 +190,7 @@ fn add_connection(d: List(Group), c: Pair) -> List(Group) {
         |> result.lazy_unwrap(fn (){ dict.from_list([#(a, True)]) })
     let db = list.find(d, dict.has_key(_, b))
         |> result.lazy_unwrap(fn (){ dict.from_list([#(b, True)]) })
-    
+
     let rest =
         list.filter(d, fn(d) { !dict.has_key(d, a) && !dict.has_key(d, a) })
     [dict.combine(da, db, bool.or), ..rest]
