@@ -58,10 +58,16 @@ fn last_pair_group_join(g: List(Group)) -> Pair {
 }
 
 fn closest_group_pair(g: List(Group)) -> GroupConnection {
-    closest_group_pair0(g, #(#(large_point, large_point), #(dict.new(), dict.new())), large)
+    closest_group_pair0(
+        g,
+        #(#(large_point, large_point), #(dict.new(), dict.new())),
+        large
+    )
 }
 
-fn closest_group_pair0(g: List(Group), best: GroupConnection, bestd: Int) -> GroupConnection {
+fn closest_group_pair0(g: List(Group), best: GroupConnection, bestd: Int)
+    -> GroupConnection
+{
     case g {
         [] -> best
         [_] -> best
@@ -79,7 +85,9 @@ fn closest_group(g: List(Group), p: Group) -> #(Int, Pair, Group) {
     closest_group0(g, p, #(#(large_point, large_point), dict.new()), large)
 }
 
-fn closest_group0(g: List(Group), p: Group, best: #(Pair, Group), bestd: Int) -> #(Int, Pair, Group) {
+fn closest_group0(g: List(Group), p: Group, best: #(Pair, Group), bestd: Int)
+    -> #(Int, Pair, Group)
+{
     case g {
         [] -> #(bestd, best.0, best.1)
         [a, ..g] -> {
@@ -93,10 +101,17 @@ fn closest_group0(g: List(Group), p: Group, best: #(Pair, Group), bestd: Int) ->
 }
 
 fn group_distance(a: Group, b: Group) -> #(Int, Pair) {
-    group_distacne0(dict.keys(a), dict.keys(b), #(large_point, large_point), large)
+    group_distacne0(
+        dict.keys(a),
+        dict.keys(b),
+        #(large_point, large_point),
+        large
+    )
 }
 
-fn group_distacne0(a: List(Point), b: List(Point), best: Pair, bestd: Int) -> #(Int, Pair) {
+fn group_distacne0(a: List(Point), b: List(Point), best: Pair, bestd: Int)
+    -> #(Int, Pair)
+{
     case a {
         [] -> #(bestd, best)
         [a, ..ra] -> {
@@ -113,7 +128,9 @@ fn closest(l: List(Point), p: Point) -> #(Int, Point) {
     closest0(l, p, large_point, large)
 }
 
-fn closest0(l: List(Point), p: Point, best: Point, bestd: Int) -> #(Int, Point) {
+fn closest0(l: List(Point), p: Point, best: Point, bestd: Int)
+    -> #(Int, Point)
+{
     case l {
         [] -> #(bestd, best)
         [a, ..l] -> {
@@ -141,7 +158,7 @@ fn connect_n0(p: List(Point), con: Int, g: Dict(Pair, Bool))
          0 -> g
          _ -> {
              let pr =
-                closest_pair_not_of(p, fn(a, b) { !dict.has_key(g, #(a, b)) })
+                closest_pair_of(p, fn(a, b) { !dict.has_key(g, #(a, b)) })
              connect_n0(p, con - 1, dict.insert(g, pr, True))
          }
      }
@@ -174,14 +191,16 @@ fn add_connection(d: List(Group), c: Pair) -> List(Group) {
     let db = list.find(d, dict.has_key(_, b))
         |> result.lazy_unwrap(fn (){ dict.from_list([#(b, True)]) })
     
-    [ dict.combine(da, db, bool.or), ..list.filter(d, fn(d) { !dict.has_key(d, a) && !dict.has_key(d, a) }) ]
+    let rest =
+        list.filter(d, fn(d) { !dict.has_key(d, a) && !dict.has_key(d, a) })
+    [dict.combine(da, db, bool.or), ..rest]
 }
 
-fn closest_pair_not_of(d: List(Point), f: fn(Point, Point) -> Bool) -> Pair {
-    closest_pair_not_of0(d, f, #(large_point, large_point), large)
+fn closest_pair_of(d: List(Point), f: fn(Point, Point) -> Bool) -> Pair {
+    closest_pair_of0(d, f, #(large_point, large_point), large)
 }
 
-fn closest_pair_not_of0(
+fn closest_pair_of0(
     d: List(Point),
     f: fn(Point, Point) -> Bool,
     best: Pair,
@@ -191,18 +210,17 @@ fn closest_pair_not_of0(
         [] -> best
         [_] -> best
         [a, ..d] -> {
-            let pt = closest_not_of(d, a, f)
+            let pt = closest_of(d, a, f)
             let dist = dist_sq(pt, a)
             case dist < bestd {
-                True -> closest_pair_not_of0(d, f, #(a, pt), dist)
-                _ -> closest_pair_not_of0(d, f, best, bestd)
+                True -> closest_pair_of0(d, f, #(a, pt), dist)
+                _ -> closest_pair_of0(d, f, best, bestd)
             }
         }
     }
 }
 
-fn closest_not_of(d: List(Point), p: Point, f: fn(Point, Point) -> Bool)
-    -> Point {
+fn closest_of(d: List(Point), p: Point, f: fn(Point, Point) -> Bool) -> Point {
     closest_not_of0(d, p, f, large_point, large)
 }
 
