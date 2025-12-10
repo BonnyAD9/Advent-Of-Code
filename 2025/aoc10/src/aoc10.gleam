@@ -11,33 +11,33 @@ type Machine = #(Int, List(Int))
 pub fn main() -> Nil {
     let res = stdin.read_lines()
         |> yielder.map(parse_machine)
-        |> yielder.map(machine_button_cnt)
+        |> yielder.map(light_button_cnt)
         |> yielder.fold(0, int.add)
 
     io.println(int.to_string(res))
 }
 
-fn machine_button_cnt(m: Machine) -> Int {
-    machine_button_cnt0(m, 1, list.length(m.1))
+fn light_button_cnt(m: Machine) -> Int {
+    light_button_cnt0(m, 1, list.length(m.1))
 }
 
-fn machine_button_cnt0(m: Machine, cnt: Int, lim: Int) -> Int {
-    case machine_button_cnt1(m, cnt, 0) {
+fn light_button_cnt0(m: Machine, cnt: Int, lim: Int) -> Int {
+    case light_button_cnt1(m, cnt, 0) {
         True -> cnt
         False if cnt == lim -> panic
-        False -> machine_button_cnt0(m, cnt + 1, lim)
+        False -> light_button_cnt0(m, cnt + 1, lim)
     }
 }
 
-fn machine_button_cnt1(m: Machine, cnt: Int, state: Int) -> Bool {
+fn light_button_cnt1(m: Machine, cnt: Int, state: Int) -> Bool {
     case m.1 {
         _ if cnt == 0 -> state == m.0
         [] -> False
-        [a, ..l] -> machine_button_cnt1(
+        [a, ..l] -> light_button_cnt1(
             #(m.0, l),
             cnt - 1,
             int.bitwise_exclusive_or(state, a)
-        ) || machine_button_cnt1(#(m.0, l), cnt, state)
+        ) || light_button_cnt1(#(m.0, l), cnt, state)
     }
 }
 
