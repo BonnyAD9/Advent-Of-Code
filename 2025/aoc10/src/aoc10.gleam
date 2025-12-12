@@ -12,8 +12,8 @@ type Machine = #(Int, List(Int), List(Int))
 pub type OffMachine = #(Int, List(Int))
 type Joltage = #(Int, Int) // #(value, id)
 type Bin = #(Joltage, List(Int))
-type BtnRange = #(Int, Int, Int) // #(button, min, max)
-type OptBin = #(Joltage, List(BtnRange))
+type OptBtn = #(Int, Int, Int, Int) // #(button, min, max, rmax)
+type OptBin = #(Joltage, List(OptBtn))
 
 pub fn main() -> Nil {
     let res = stdin.read_lines()
@@ -50,14 +50,15 @@ fn joltage_button_cnt0(bin: OptBin, bins: List(OptBin), joltages: List(Joltage),
         }
         [], [_, ..], [_, ..] -> -1
         [_, ..], _, [#(cj, _), ..] if cj > tj -> -1
-        [#(btn, min, max)], [bin, ..bins], [#(cj, _), ..] -> {
+        [#(btn, min, max, _)], [bin, ..bins], [#(cj, _), ..] -> {
             let pc = tj - cj
             case pc < min || pc > max {
                 True -> -1
                 False -> joltage_button_cnt0(bin, bins, press_button_j(btn, pc, joltages), cnt + pc, idx + 1)
             }
         }
-        [#(btn, min, max), ..buttons], _, _ -> {
+        [#(btn, min, max, rmax), ..buttons], _, [#(cj, _), ..] -> {
+            let min = int.max(min, tj - cj - rmax)
             let #(joltages, cnt, pc) = case min != 0 {
                 True -> {
                     let pc = int.max(min, 1)
@@ -65,12 +66,16 @@ fn joltage_button_cnt0(bin: OptBin, bins: List(OptBin), joltages: List(Joltage),
                 }
                 False -> #(joltages, cnt, 0)
             }
-            let res = joltage_button_cnt0(#(bin.0, buttons), bins, joltages, cnt, idx)
-            case res == -1 {
-                True -> joltage_button_cnt0(#(bin.0, [#(btn, 1, max - pc), ..buttons]), bins, joltages, cnt, idx)
-                False -> res
+            let res1 = joltage_button_cnt0(#(bin.0, buttons), bins, joltages, cnt, idx)
+            let res2 = joltage_button_cnt0(#(bin.0, [#(btn, 1, max - pc, rmax), ..buttons]), bins, joltages, cnt, idx)
+            case res1 == -1, res2 == -1 {
+                True, True -> -1
+                True, False -> res2
+                False, True -> res1
+                _, _ if res1 < res2 -> res1
+                _, _ -> res2
             }
-        } // 7, 4, 5, 3
+        }
         _, _, _ -> panic
     }
 }
@@ -104,7 +109,7 @@ fn sort_buttons(buttons: List(Int)) -> List(Int) {
 }
 
 fn prepare_bins(buttons: List(Int), joltages: List(Int)) -> List(OptBin) {
-    joltages
+    let bins = joltages
         |> yielder.from_list()
         |> yielder.index()
         |> yielder.map(fn(ji) {
@@ -114,18 +119,34 @@ fn prepare_bins(buttons: List(Int), joltages: List(Int)) -> List(OptBin) {
         |> yielder.to_list()
         |> list.sort(fn(a, b) { int.compare(a.0, b.0) })
         |> list.map(pair.second)
-        |> optimize_bins()
-        |> filter_bin_buttons()
+    let opt = optimize_bins(bins)
+    let bins = filter_bin_buttons(bins)
+    apply_opt(bins, opt)
 }
 
-fn optimize_bins(bins: List(Bin)) -> List(OptBin) {
-    let ranges = optimize_bins0(bins, list.length(bins) * 2, dict.new())
+fn apply_opt(bins: List(Bin), ranges: Dict(Int, #(Int, Int))) -> List(OptBin) {
     list.map(bins, fn(bin) {
-        #(bin.0, list.map(bin.1, fn(b) {
-            let #(min, max) = dict.get(ranges, b) |> result.lazy_unwrap(fn() {panic})
-            #(b, min, max)
-        }))
+        #(bin.0, apply_opt0(bin.1, ranges, []))
     })
+}
+
+fn apply_opt0(btns: List(Int), ranges: Dict(Int, #(Int, Int)), res: List(OptBtn)) -> List(OptBtn) {
+    case btns {
+        [] -> res |> list.reverse()
+        [btn, ..btns] -> {
+            let next_max = btns
+                |> yielder.from_list()
+                |> yielder.map(dict.get(ranges, _))
+                |> yielder.map(result.lazy_unwrap(_, fn() {panic}))
+                |> yielder.fold(0, fn(s, i) { s + i.1 })
+            let #(min, max) = dict.get(ranges, btn) |> result.lazy_unwrap(fn() {panic})
+            apply_opt0(btns, ranges, [#(btn, min, max, next_max), ..res])
+        }
+    }
+}
+
+fn optimize_bins(bins: List(Bin)) -> Dict(Int, #(Int, Int)) {
+    optimize_bins0(bins, list.length(bins) * 2, dict.new())
 }
 
 fn optimize_bins0(bins: List(Bin), passes: Int, ranges: Dict(Int, #(Int, Int))) -> Dict(Int, #(Int, Int)) {
@@ -161,17 +182,17 @@ fn optimize_bins2(btns: List(Int), target: Int, mins: Int, maxs: Int, ranges: Di
     }
 }
 
-fn filter_bin_buttons(bins: List(OptBin)) -> List(OptBin) {
+fn filter_bin_buttons(bins: List(Bin)) -> List(Bin) {
     filter_bin_buttons0(bins, [], dict.new())
         |> list.reverse()
 }
 
-fn filter_bin_buttons0(bins: List(OptBin), res: List(OptBin), used: Dict(Int, Bool)) -> List(OptBin) {
+fn filter_bin_buttons0(bins: List(Bin), res: List(Bin), used: Dict(Int, Bool)) -> List(Bin) {
     case bins {
         [] -> res
         [b, ..bins] -> {
-            let buts = list.filter(b.1, fn(b) { !dict.has_key(used, b.0) })
-            let used = list.map(b.1, fn(a) { #(a.0, True) }) |> dict.from_list() |> dict.merge(used)
+            let buts = list.filter(b.1, fn(b) { !dict.has_key(used, b) })
+            let used = list.map(b.1, fn(a) { #(a, True) }) |> dict.from_list() |> dict.merge(used)
             filter_bin_buttons0(bins, [#(b.0, buts), ..res], used)
         }
     }
@@ -286,12 +307,12 @@ fn opt_bin_to_string(b: OptBin) -> String {
     joltage_to_string(b.0) <> btn_ranges_to_string(b.1)
 }
 
-fn btn_ranges_to_string(b: List(BtnRange)) -> String {
+fn btn_ranges_to_string(b: List(OptBtn)) -> String {
     "[" <> { list.map(b, btn_range_to_string) |> string.join(",") } <> "]"
 }
 
-fn btn_range_to_string(b: BtnRange) -> String {
-    int.to_base2(b.0) <> "@" <> int.to_string(b.1) <> ".." <> int.to_string(b.2)
+fn btn_range_to_string(b: OptBtn) -> String {
+    int.to_base2(b.0) <> "@" <> int.to_string(b.1) <> ".." <> int.to_string(b.2) <> "/" <> int.to_string(b.3)
 }
 
 // fn buttons_to_string(b: List(Int)) -> String {
