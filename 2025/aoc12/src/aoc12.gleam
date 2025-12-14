@@ -12,11 +12,11 @@ const weights = [8, 8, 7, 6, 8, 8]
 
 pub fn main() -> Nil {
     let res = stdin.read_lines()
-        |> yielder.filter(string.contains(_, "x"))
+        |> yielder.filter(string.contains(_, "x")) // skip the shapes
         |> yielder.map(parse_tree)
         |> yielder.filter(tree_fits)
         |> yielder.fold(0, fn(a, _) { a + 1 })
-    
+
     io.println(int.to_string(res))
 }
 
