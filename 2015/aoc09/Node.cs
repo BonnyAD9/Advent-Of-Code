@@ -1,12 +1,16 @@
 namespace Aoc09;
 
-public class Node
+public class Node(string name)
 {
     public List<(int, Node)> Follow { get; } = [];
-    public string Name { get; init; }
+    public string Name { get; } = name;
 
-    public Node(string name)
+    public override int GetHashCode() {
+        return Name.GetHashCode();
+    }
+    
+    public override bool Equals(object? obj)
     {
-        Name = name;
+        return obj is Node n && n.Name == Name;
     }
 }

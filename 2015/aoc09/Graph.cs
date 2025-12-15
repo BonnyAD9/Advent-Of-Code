@@ -53,20 +53,27 @@ class Graph
         {
             var (len, list) = nodes.First();
             var (node, visited) = list[^1];
+            
             if (visited.Count == Data.Count)
             {
                 return Inverse ? ushort.MaxValue * (visited.Count - 1) - len : len;
             }
+            
             list.RemoveAt(list.Count - 1);
             if (list.Count == 0)
             {
                 nodes.Remove(len);
             }
-            foreach (var fl in node.Follow)
+            
+            foreach (var (w, n) in node.Follow)
             {
-                var nlen = len + fl.Item1;
+                if (visited.Contains(n))
+                {
+                    continue;
+                }
+                var nlen = len + w;
                 nodes.TryAdd(nlen, []);
-                nodes[nlen].Add((fl.Item2, visited.Add(fl.Item2)));
+                nodes[nlen].Add((n, visited.Add(n)));
             }
         }
     }
