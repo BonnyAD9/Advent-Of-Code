@@ -1,0 +1,7 @@
+[
+    {
+        "label": "Aoc 2015-09",
+        "adapter": "netcoredbg",
+        "request": "launch"
+    }
+]
